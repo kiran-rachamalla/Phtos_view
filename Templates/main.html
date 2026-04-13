@@ -1,0 +1,126 @@
+{% extends 'baseTemplate.html' %}
+
+{% block body %}
+<h2>My Photo Gallery</h2>
+
+<div class="nav-bar">
+  <button class="back-btn" id="backBtn">⬅</button>
+  <span id="currentPath">/</span>
+</div>
+<div class="gallery" id="gallery">
+  {% for item in items %}
+
+    {% if item.type == "folder" %}
+      <!-- 📁 Folder -->
+      <div class="folder" onclick="openFolder('{{ item.path }}')">
+        <div class="folder-icon">📁</div>
+        <div class="folder-name">{{ item.name }}</div>
+      </div>
+
+    {% else %}
+      <!-- 🖼️ Image -->
+       {% if item.path.lower().endswith('.mp4') %}
+          <video
+            class="gallery-img"
+            data-src="/video/{{ item.path }}"
+            data-name="{{ item.path }}"
+            poster="/thumb/{{ item.path }}"
+            preload="none"
+            muted
+          ></video>
+        {% else %}
+            <img
+        class="gallery-img"
+        src="/thumb/{{ item.path }}"
+        data-full="/images/{{ item.path }}"
+        data-name="{{ item.path }}"
+        loading="lazy"
+      >
+        {% endif %}
+
+    {% endif %}
+
+  {% endfor %}
+</div>
+<!--<div class="gallery" id="gallery">-->
+<!--    {% for image in images %}-->
+<!--&lt;!&ndash;        <a href="/photo/{{ image }}">&ndash;&gt;-->
+<!--&lt;!&ndash;            <img src="/thumb/{{ image }}" loading="lazy"&ndash;&gt;-->
+<!--&lt;!&ndash;                 data-full="/thumb/{{ image }}"&ndash;&gt;-->
+<!--&lt;!&ndash;            >&ndash;&gt;-->
+<!--&lt;!&ndash;        </a>&ndash;&gt;-->
+<!--        <img-->
+<!--              src="/thumb/{{ image }}"-->
+<!--              data-full="/images/{{ image }}"-->
+<!--              data-name="{{ image }}"-->
+<!--              class="gallery-img">-->
+<!--    {% endfor %}-->
+<!--</div>-->
+
+<div class="loading" id="loading">Loading more images...</div>
+<div id="sentinel" style="height: 50px;"></div>
+<div id="popup">
+  <img id="popup-img">
+</div>
+<div id="viewer" class="viewer">
+
+  <div class="top-controls">
+    <a id="download-btn" download>⬇</a>
+    <span id="close">&times;</span>
+  </div>
+  <div class="viewer-content">
+    <button id="prev">⬅</button>
+    <img id="viewer-img">
+    <button id="next">➡</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+let offset = {{ items|length }};
+<!--let loading = false;-->
+
+<!--const observer = new IntersectionObserver((entries) => {-->
+<!--    if (entries[0].isIntersecting && !loading) {-->
+<!--        loadMore();-->
+<!--    }-->
+<!--});-->
+
+<!--observer.observe(document.getElementById('sentinel'));-->
+
+<!--function loadMore() {-->
+<!--    loading = true;-->
+<!--    document.getElementById('loading').style.display = 'block';-->
+
+<!--    fetch(`/load_more?offset=${offset}`)-->
+<!--        .then(res => res.json())-->
+<!--        .then(data => {-->
+<!--            const gallery = document.getElementById('gallery');-->
+
+<!--            data.forEach(img => {-->
+<!--                const a = document.createElement('a');-->
+<!--                a.href = `/photo/${img}`;-->
+
+<!--                const image = document.createElement('img');-->
+<!--                image.src = `/thumb/${img}`;-->
+<!--                image.dataset.full = `/thumb/${img}`;  // full-size image path-->
+<!--                image.loading = "eager";  // extra performance-->
+<!--                image.decoding = "async";-->
+
+<!--                a.appendChild(image);-->
+<!--                gallery.appendChild(a);-->
+<!--            });-->
+
+<!--            offset += data.length;-->
+<!--            loading = false;-->
+<!--            document.getElementById('loading').style.display = 'none';-->
+
+<!--            // stop if no more images-->
+<!--            if (data.length === 0) {-->
+<!--                observer.disconnect();-->
+<!--            }-->
+<!--        });-->
+<!--}-->
+</script>
+{% endblock %}

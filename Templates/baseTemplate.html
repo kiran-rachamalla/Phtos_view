@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ The_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <script>
+  $SCRIPT_ROOT = {{ request.script_root|tojson }};
+</script>
+</head>
+<body>
+{% block body %}
+
+{% endblock %}
+{% block script %}
+
+{% endblock %}
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
