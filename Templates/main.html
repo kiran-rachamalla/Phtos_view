@@ -1,12 +1,26 @@
 {% extends 'baseTemplate.html' %}
 
 {% block body %}
+
 <h2>My Photo Gallery</h2>
+
+<div class="top-bar">
 
 <div class="nav-bar">
   <button class="back-btn" id="backBtn">⬅</button>
   <span id="currentPath">/</span>
 </div>
+
+  <div class="controls">
+    <button class="filter-btn sort-btn" data-sort="year">By Year</button>
+    <button class="filter-btn sort-btn" data-sort="month">By Month</button>
+
+    <button id="change-folder-btn" class="filter-btn">
+     📁Change
+    </button>
+  </div>
+</div>
+
 <div class="gallery" id="gallery">
   {% for item in items %}
 
@@ -42,25 +56,12 @@
 
   {% endfor %}
 </div>
-<!--<div class="gallery" id="gallery">-->
-<!--    {% for image in images %}-->
-<!--&lt;!&ndash;        <a href="/photo/{{ image }}">&ndash;&gt;-->
-<!--&lt;!&ndash;            <img src="/thumb/{{ image }}" loading="lazy"&ndash;&gt;-->
-<!--&lt;!&ndash;                 data-full="/thumb/{{ image }}"&ndash;&gt;-->
-<!--&lt;!&ndash;            >&ndash;&gt;-->
-<!--&lt;!&ndash;        </a>&ndash;&gt;-->
-<!--        <img-->
-<!--              src="/thumb/{{ image }}"-->
-<!--              data-full="/images/{{ image }}"-->
-<!--              data-name="{{ image }}"-->
-<!--              class="gallery-img">-->
-<!--    {% endfor %}-->
-<!--</div>-->
 
 <div class="loading" id="loading">Loading more images...</div>
 <div id="sentinel" style="height: 50px;"></div>
 <div id="popup">
   <img id="popup-img">
+  <div id="popup-caption"></div>
 </div>
 <div id="viewer" class="viewer">
 
@@ -73,54 +74,37 @@
     <img id="viewer-img">
     <button id="next">➡</button>
   </div>
+
+<div id="img-name-overlay">
+  <div class="name"></div>
+  <div class="path"></div>
+  <div class="date"></div>
+</div>
+</div>
+
+<div id="folder-modal" class="modal">
+  <div class="modal-content">
+    <h3>Select Base Folder</h3>
+
+    <div id="current-base-info"></div>
+
+    <input type="text" id="folder-path-input"
+           placeholder="Enter whole Path">
+
+    <div class="modal-actions">
+      <button id="set-folder-btn">Set</button>
+      <button id="close-modal">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="loading-overlay">
+  <div class="loader"></div>
 </div>
 {% endblock %}
 
 {% block script %}
 <script>
 let offset = {{ items|length }};
-<!--let loading = false;-->
-
-<!--const observer = new IntersectionObserver((entries) => {-->
-<!--    if (entries[0].isIntersecting && !loading) {-->
-<!--        loadMore();-->
-<!--    }-->
-<!--});-->
-
-<!--observer.observe(document.getElementById('sentinel'));-->
-
-<!--function loadMore() {-->
-<!--    loading = true;-->
-<!--    document.getElementById('loading').style.display = 'block';-->
-
-<!--    fetch(`/load_more?offset=${offset}`)-->
-<!--        .then(res => res.json())-->
-<!--        .then(data => {-->
-<!--            const gallery = document.getElementById('gallery');-->
-
-<!--            data.forEach(img => {-->
-<!--                const a = document.createElement('a');-->
-<!--                a.href = `/photo/${img}`;-->
-
-<!--                const image = document.createElement('img');-->
-<!--                image.src = `/thumb/${img}`;-->
-<!--                image.dataset.full = `/thumb/${img}`;  // full-size image path-->
-<!--                image.loading = "eager";  // extra performance-->
-<!--                image.decoding = "async";-->
-
-<!--                a.appendChild(image);-->
-<!--                gallery.appendChild(a);-->
-<!--            });-->
-
-<!--            offset += data.length;-->
-<!--            loading = false;-->
-<!--            document.getElementById('loading').style.display = 'none';-->
-
-<!--            // stop if no more images-->
-<!--            if (data.length === 0) {-->
-<!--                observer.disconnect();-->
-<!--            }-->
-<!--        });-->
-<!--}-->
 </script>
 {% endblock %}

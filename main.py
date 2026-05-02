@@ -3,6 +3,7 @@ import os
 from PIL import Image
 from io import BytesIO
 import subprocess
+import re
 
 from flask import Flask, render_template, request, send_from_directory, jsonify, send_file
 
@@ -11,6 +12,8 @@ PHOTO_FOLDER = r'C:\Users\racha\OneDrive\Desktop\Googlephotos'
 BATCH_SIZE = 80
 THUMB_SIZE = (300, 300)
 THUMB_FOLDER = "thumb_cache"
+CACHE = {}
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".heic", ".mp4"}
 
 app = Flask(__name__, template_folder='Templates')
 
@@ -30,13 +33,35 @@ def gallery(subpath=""):
 def api_images():
     folder = request.args.get("folder", "")
     offset = int(request.args.get("offset", 0))
-    items = get_files_and_folders(folder)
+    mode = request.args.get("mode", "")
+    if mode == "":
+        items = get_files_and_folders(folder)
+    else:
+        items = get_files_and_folders_by_time(folder,mode);
+
     slice = items[offset:offset+BATCH_SIZE]
 
     return {
         "images": slice,
         "next_offset": offset + len(slice)
     }
+
+@app.route("/set-base-folder", methods=["POST"])
+def set_base_folder():
+    global PHOTO_FOLDER
+
+    data = request.json
+    path = data.get("path")
+
+    if not os.path.isdir(path):
+        return {"error": "Invalid path"}, 400
+
+    PHOTO_FOLDER = path
+
+    # clear cache (important)
+    CACHE.clear()
+
+    return {"status": "ok"}
 
 def get_files_and_folders(subpath):
     base_path = os.path.join(PHOTO_FOLDER, subpath)
@@ -166,11 +191,242 @@ def generate_thumbnail(video_path, thumb_path):
             ]
 
      subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL);
-     # result = subprocess.run(cmd, capture_output=True, text=True)
-     #
-     # print("STDOUT:", result.stdout)
-     # print("STDERR:", result.stderr)
+
+def extract_date(name):
+    match = re.search(r'^IMG_(\d{4})(\d{2})(\d{2})', name, re.IGNORECASE)
+    if match:
+        return match.groups()
+    return None, None, None
+
+def is_valid_media(name):
+    _, ext = os.path.splitext(name)
+    return ext.lower() in ALLOWED_EXTENSIONS
+
+def scan_and_group(root_folder, mode="year"):
+    result = {}
+
+    for root, dirs, files in os.walk(root_folder):
+        for name in files:
+
+            if not is_valid_media(name):
+                continue
+
+            full_path = os.path.join(root, name)
+            rel_path = os.path.relpath(full_path, root_folder)
+
+            year, month, day = extract_date(name)
+
+            # ---------- NON-MATCH → OTHERS ----------
+            if not year:
+                if "Others" not in result:
+                    result["Others"] = {
+                        "type": "folder",
+                        "name": "Others",
+                        "children": []
+                    }
+
+                result["Others"]["children"].append({
+                    "type": "image",
+                    "name": name,
+                    "path": rel_path
+                })
+                continue
+
+            # ---------- YEAR MODE ----------
+            if mode == "year":
+                if year not in result:
+                    result[year] = {
+                        "type": "folder",
+                        "name": year,
+                        "children": []
+                    }
+
+                result[year]["children"].append({
+                    "type": "image",
+                    "name": name,
+                    "path": rel_path
+                })
+
+            # ---------- MONTH MODE ----------
+            elif mode == "month":
+                if year not in result:
+                    result[year] = {
+                        "type": "folder",
+                        "name": year,
+                        "children": {}
+                    }
+
+                if month not in result[year]["children"]:
+                    result[year]["children"][month] = {
+                        "type": "folder",
+                        "name": month,
+                        "children": []
+                    }
+
+                result[year]["children"][month]["children"].append({
+                    "type": "image",
+                    "name": name,
+                    "path": rel_path
+                })
+
+    # ---------- CONVERT TO LIST ----------
+    output = []
+
+    for key, data in result.items():
+        if key == "Others":
+            output.append(data)
+            continue
+
+        if mode == "year":
+            output.append(data)
+
+        elif mode == "month":
+            data["children"] = list(data["children"].values())
+            output.append(data)
+
+    return output
+
+# def scan_and_group(root_folder, mode="year"):
+#     result = {}
+#
+#     for root, dirs, files in os.walk(root_folder):
+#         for name in files:
+#             full_path = os.path.join(root, name)
+#
+#             year, month, day = extract_date(name)
+#             if not year:
+#                 continue  # skip non-matching files
+#
+#             rel_path = os.path.relpath(full_path, root_folder)
+#
+#             # -------- YEAR MODE --------
+#             if mode == "year":
+#                 if year not in result:
+#                     result[year] = {
+#                         "type": "folder",
+#                         "name": year,
+#                         "children": []
+#                     }
+#
+#                 result[year]["children"].append({
+#                     "type": "image",
+#                     "name": name,
+#                     "path": rel_path
+#                 })
+#
+#             # -------- MONTH MODE --------
+#             elif mode == "month":
+#                 if year not in result:
+#                     result[year] = {
+#                         "type": "folder",
+#                         "name": year,
+#                         "children": {}
+#                     }
+#
+#                 if month not in result[year]["children"]:
+#                     result[year]["children"][month] = {
+#                         "type": "folder",
+#                         "name": month,
+#                         "children": []
+#                     }
+#
+#                 result[year]["children"][month]["children"].append({
+#                     "type": "image",
+#                     "name": name,
+#                     "path": rel_path
+#                 })
+#
+#     # -------- Convert dict → list --------
+#     output = []
+#
+#     for year_data in result.values():
+#         if mode == "year":
+#             output.append(year_data)
+#
+#         elif mode == "month":
+#             months = list(year_data["children"].values())
+#             year_data["children"] = months
+#             output.append(year_data)
+#
+#     return output
 
 # app.run(debug=True)
+
+def find_node(data, name):
+    return next((x for x in data if x["name"] == name), None)
+
+def get_month_name(month):
+    months = ["Jan","Feb","Mar","Apr","May","Jun",
+              "Jul","Aug","Sep","Oct","Nov","Dec"]
+    return months[int(month) - 1]
+
+def clear_cache():
+    CACHE.clear()
+
+def get_files(mode):
+    if mode in CACHE:
+        return CACHE[mode]
+
+    data = scan_and_group(PHOTO_FOLDER, mode=mode)
+
+    CACHE[mode] = data  # store in cache
+    return data
+
+def get_files_and_folders_by_time(folder,mode):
+    items = [];
+    files_temp = get_files(mode)
+    if folder == "":
+        for data in files_temp:
+            items.append({
+                "type": data["type"],
+                "name": data["name"],
+                "path": data["name"],
+                # "sort_key": int(data["name"])
+            })
+
+    # -------- DYNAMIC TRAVERSAL --------
+    else:
+        parts = folder.split("/")  # ["2024"] or ["2024","11"]
+
+        current = files_temp
+
+        for part in parts:
+            node = find_node(current, part)
+            if not node:
+                current = []
+                break
+            current = node.get("children", [])
+
+        # -------- FINAL LEVEL --------
+        if mode == "year":
+            # directly return children (your original logic)
+            items = current
+
+        elif mode == "month":
+            if len(parts) == 1:
+                # show months → build paths
+                for m in current:
+                    month_num = m["name"]
+                    month_label = get_month_name(month_num)
+
+                    items.append({
+                        "type": m["type"],
+                        "name": month_label,  # 👈 show "Nov"
+                        "path": f"{parts[0]}/{month_num}",  # 👈 keep original for backend
+                        "sort_key": int(month_num)
+                    })
+            else:
+                # already at month → return images
+                items = current
+
+    items.sort(key=lambda x: x.get("sort_key", x["name"]))
+    # items.sort(key=lambda x: x["sort_key"])
+    return items
+
+@app.route("/get-base-folder", methods=["GET"])
+def get_base_folder():
+    global PHOTO_FOLDER
+    return {"path": PHOTO_FOLDER}
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)

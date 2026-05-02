@@ -49,7 +49,12 @@ body {
   border: 1px solid #ccc;
   background: white;
 }
-
+#popup-caption {
+  margin-top: 5px;
+  font-size: 14px;
+  color: #333;
+  background: rgba(255, 255, 255, 0.8);
+}
 .viewer {
   display: none;
   position: fixed;
@@ -89,6 +94,32 @@ body {
   cursor: pointer;
 }
 
+#img-name-overlay {
+  position: absolute;
+  bottom: 20px;
+  right: 30px;
+
+  color: white;
+  font-size: 14px;
+
+  background: rgba(0, 0, 0, 0.6);
+  padding: 6px 10px;
+  border-radius: 6px;
+
+  max-width: 300px;
+  word-break: break-word;
+
+  line-height: 1.4;
+}
+#img-name-overlay .name {
+  font-weight: 600;
+}
+
+#img-name-overlay .path,
+#img-name-overlay .date {
+  font-size: 12px;
+  opacity: 0.8;
+}
 button {
   font-size: 30px;
   color: white;
@@ -195,4 +226,126 @@ button {
 button:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  /*gap: 6px;*/
+}
+
+.filter-btn {
+  padding: 3px 10px;
+  font-size: 12px;
+  border-radius: 20px;   /* pill shape */
+  border: 1px solid #444;
+  background: #1a1a1a;
+  color: #ccc;
+}
+
+.filter-btn.active {
+  background: #fff;
+  color: #000;
+}
+
+.filter-btn:hover {
+  background: #2a2a2a;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 20000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #1e1e1e;
+  padding: 18px;
+  border-radius: 10px;
+  width: 360px;
+  color: white;
+  font-family: sans-serif;
+}
+
+.modal-content h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 13px;
+  margin-top: 5px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  color: white;
+  border-radius: 6px;
+}
+
+.modal-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.modal-actions button {
+  padding: 4px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #ddd;
+  cursor: pointer;
+}
+
+.modal-actions button:hover {
+  background: #3a3a3a;
+}
+
+/* Primary button (Set) */
+#set-folder-btn {
+  background: #fff;
+  color: #000;
+  border: none;
+}
+
+#set-folder-btn:hover {
+  background: #ddd;
+}
+
+#current-base-info {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 8px;
+  word-break: break-all;
+}
+
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
 }
