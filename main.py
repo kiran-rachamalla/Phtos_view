@@ -403,7 +403,7 @@ def get_files_and_folders_by_time(folder,mode):
             items = current
 
         elif mode == "month":
-            if len(parts) == 1:
+            if len(parts) == 1 and folder != 'Others' :
                 # show months → build paths
                 for m in current:
                     month_num = m["name"]
