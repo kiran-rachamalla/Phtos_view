@@ -1,5 +1,8 @@
-import json
+from tkinter import filedialog
+
+import webview as wb
 import os
+import sys
 from PIL import Image
 from io import BytesIO
 import subprocess
@@ -7,15 +10,31 @@ import re
 
 from flask import Flask, render_template, request, send_from_directory, jsonify, send_file
 
-# PHOTO_FOLDER = r'F:\Photos\chintu photos'
-PHOTO_FOLDER = r'C:\Users\racha\OneDrive\Desktop\Googlephotos'
+def get_base_path():
+    if hasattr(sys, '_MEIPASS'):
+        return sys._MEIPASS   # when running as .exe
+    return os.path.abspath(".")  # when running normally
+
+BASE_PATH = get_base_path()
+
+# PHOTO_FOLDER = r'C:\Users\racha\OneDrive\Desktop\Googlephotos'
+PHOTO_FOLDER = os.path.join(BASE_PATH, "Default_Image_folder")
+# PHOTO_FOLDER = ''
 BATCH_SIZE = 80
 THUMB_SIZE = (300, 300)
-THUMB_FOLDER = "thumb_cache"
+THUMB_FOLDER = os.path.join(
+    os.path.expanduser("~"),
+    "AppData",
+    "Local",
+    "MyPhotoViewer",
+    "thumb_cache"
+)
 CACHE = {}
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".heic", ".mp4"}
 
-app = Flask(__name__, template_folder='Templates')
+
+app = Flask(__name__, template_folder=os.path.join(BASE_PATH, "templates"),
+                      static_folder=os.path.join(BASE_PATH, "static"))
 
 # @app.route('/', methods=['GET', 'POST'])
 # def fetch_ex():
@@ -179,7 +198,7 @@ def generate_thumbnail(video_path, thumb_path):
 
      BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-     FFMPEG_PATH = os.path.join(BASE_DIR, "ffmpeg", "ffmpeg.exe")
+     FFMPEG_PATH = os.path.join(BASE_PATH, "ffmpeg", "ffmpeg.exe")
 
      cmd = [
                 FFMPEG_PATH,
@@ -190,7 +209,8 @@ def generate_thumbnail(video_path, thumb_path):
                 thumb_path
             ]
 
-     subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL);
+     subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    creationflags=subprocess.CREATE_NO_WINDOW);
 
 def extract_date(name):
     match = re.search(r'^IMG_(\d{4})(\d{2})(\d{2})', name, re.IGNORECASE)
@@ -358,7 +378,10 @@ def find_node(data, name):
 def get_month_name(month):
     months = ["Jan","Feb","Mar","Apr","May","Jun",
               "Jul","Aug","Sep","Oct","Nov","Dec"]
-    return months[int(month) - 1]
+    try:
+        return months[int(month) - 1]
+    except (ValueError, IndexError):
+        return month
 
 def clear_cache():
     CACHE.clear()
@@ -413,7 +436,7 @@ def get_files_and_folders_by_time(folder,mode):
                         "type": m["type"],
                         "name": month_label,  # 👈 show "Nov"
                         "path": f"{parts[0]}/{month_num}",  # 👈 keep original for backend
-                        "sort_key": int(month_num)
+                        "sort_key": int(month_num) if str(month_num).isdigit() else 1
                     })
             else:
                 # already at month → return images
@@ -428,5 +451,36 @@ def get_base_folder():
     global PHOTO_FOLDER
     return {"path": PHOTO_FOLDER}
 
+class Api:
+    def download_file(self, file_path, file_name):
+        # relative_path = file_path.replace("/images/", "")
+        fileUrl = file_path.lstrip("/")
+
+        if fileUrl.startswith("images/"):
+            relative_path = fileUrl.replace("images/", "", 1)
+        elif fileUrl.startswith("video/"):
+            relative_path = fileUrl.replace("video/", "", 1)
+        else:
+            relative_path = fileUrl
+        # build real path
+        file_path = os.path.join(PHOTO_FOLDER, relative_path)
+
+        if not os.path.exists(file_path):
+            return f"File not found: {file_path}"
+
+        save_path = filedialog.asksaveasfilename(initialfile=file_name)
+        if save_path:
+            with open(file_path, 'rb') as fsrc, open(save_path, 'wb') as fdst:
+                fdst.write(fsrc.read())
+        return "done"
+
+api = Api()
+
+
+# if __name__ == '__main__':
+#     app.run(host="0.0.0.0", port=5000)
+
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000)
+    wb.create_window(title='My Photo Viewer', url=app, js_api=api)
+    wb.start()
+    # wb.start(debug=True)

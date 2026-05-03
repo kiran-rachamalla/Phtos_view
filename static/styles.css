@@ -110,6 +110,9 @@ body {
   word-break: break-word;
 
   line-height: 1.4;
+  user-select: text;
+  -webkit-user-select: text;
+  pointer-events: auto;
 }
 #img-name-overlay .name {
   font-weight: 600;

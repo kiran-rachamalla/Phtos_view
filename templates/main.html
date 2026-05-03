@@ -1,0 +1,110 @@
+{% extends 'baseTemplate.html' %}
+
+{% block body %}
+
+<h2>My Photo Gallery</h2>
+
+<div class="top-bar">
+
+<div class="nav-bar">
+  <button class="back-btn" id="backBtn">⬅</button>
+  <span id="currentPath">/</span>
+</div>
+
+  <div class="controls">
+    <button class="filter-btn sort-btn" data-sort="year">By Year</button>
+    <button class="filter-btn sort-btn" data-sort="month">By Month</button>
+
+    <button id="change-folder-btn" class="filter-btn">
+     📁Change
+    </button>
+  </div>
+</div>
+
+<div class="gallery" id="gallery">
+  {% for item in items %}
+
+    {% if item.type == "folder" %}
+      <!-- 📁 Folder -->
+      <div class="folder" onclick="openFolder('{{ item.path }}')">
+        <div class="folder-icon">📁</div>
+        <div class="folder-name">{{ item.name }}</div>
+      </div>
+
+    {% else %}
+      <!-- 🖼️ Image -->
+       {% if item.path.lower().endswith('.mp4') %}
+          <video
+            class="gallery-img"
+            data-src="/video/{{ item.path }}"
+            data-name="{{ item.path }}"
+            poster="/thumb/{{ item.path }}"
+            preload="none"
+            muted
+          ></video>
+        {% else %}
+            <img
+        class="gallery-img"
+        src="/thumb/{{ item.path }}"
+        data-full="/images/{{ item.path }}"
+        data-name="{{ item.path }}"
+        loading="lazy"
+      >
+        {% endif %}
+
+    {% endif %}
+
+  {% endfor %}
+</div>
+
+<div class="loading" id="loading">Loading more images...</div>
+<div id="sentinel" style="height: 50px;"></div>
+<div id="popup">
+  <img id="popup-img">
+  <div id="popup-caption"></div>
+</div>
+<div id="viewer" class="viewer">
+
+  <div class="top-controls">
+    <a id="download-btn" download>⬇</a>
+    <span id="close">&times;</span>
+  </div>
+  <div class="viewer-content">
+    <button id="prev">⬅</button>
+    <img id="viewer-img">
+    <button id="next">➡</button>
+  </div>
+
+<div id="img-name-overlay">
+  <div class="name"></div>
+  <div class="path"></div>
+  <div class="date"></div>
+</div>
+</div>
+
+<div id="folder-modal" class="modal">
+  <div class="modal-content">
+    <h3>Select Base Folder</h3>
+
+    <div id="current-base-info"></div>
+
+    <input type="text" id="folder-path-input"
+           placeholder="Enter whole Path">
+
+    <div class="modal-actions">
+      <button id="set-folder-btn">Set</button>
+      <button id="close-modal">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="loading-overlay">
+  <div class="loader"></div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+let offset = {{ items|length }};
+</script>
+{% endblock %}

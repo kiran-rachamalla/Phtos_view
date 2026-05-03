@@ -86,11 +86,16 @@ function updateViewer() {
   viewer.style.display = "flex";
   viewer.style.opacity = "1";
 
-  downloadBtn.href = fileUrl;
-  downloadBtn.download = fileName;
+//  downloadBtn.href = fileUrl;
+//  downloadBtn.download = fileName;
+  downloadBtn.onclick = function () {
+  window.pywebview.api.download_file(fileUrl, fileName);
+};
 
   updateButtons();
 }
+
+
 
 function closeViewer() {
   const viewer = document.getElementById("viewer");
